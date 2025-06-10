@@ -1,3 +1,4 @@
 uvicorn
 fastapi
 youtube_transcript_api
+yt-dlp
