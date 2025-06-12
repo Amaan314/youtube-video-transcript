@@ -117,18 +117,17 @@ import base64
 COOKIE_PATH = "/tmp/cookies.txt"
 
 def ensure_cookie_file():
-    if not os.path.exists(COOKIE_PATH):
-        b64_data = os.getenv("YT_COOKIES_B64")
-        if b64_data:
-            try:
-                with open(COOKIE_PATH, "wb") as f:
-                    f.write(base64.b64decode(b64_data))
-            except Exception as e:
-                print(f"Error decoding cookies: {e}")
-        else:
-            print("YT_COOKIES_B64 not set in environment.")
-
-ensure_cookie_file()  # Run at import time or app startup
+    b64_data = os.getenv("YT_COOKIES_B64")
+    if not b64_data:
+        print("YT_COOKIES_B64 env var is missing")
+        return False
+    try:
+        with open(COOKIE_PATH, "wb") as f:
+            f.write(base64.b64decode(b64_data))
+        return True
+    except Exception as e:
+        print(f"Error decoding cookies: {e}")
+        return False # Run at import time or app startup
 
 
 def parse_subtitle_content(subtitle_content, ext):
@@ -146,6 +145,8 @@ def parse_subtitle_content(subtitle_content, ext):
   return transcript
 
 def fetch_transcript(video_id, preferred_langs=['en-orig', 'en']):
+    if not ensure_cookie_file():
+        print("Cookies file could not be created. Fetching transcript without cookies may fail.")
     youtube_url = f"https://www.youtube.com/watch?v={video_id}"
     ydl_opts = {
         'skip_download': True,
