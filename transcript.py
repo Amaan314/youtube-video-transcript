@@ -4,6 +4,8 @@ import json
 import time
 import xml.etree.ElementTree as ET
 import yt_dlp
+import os
+import base64
 
 # from youtube_transcript_api import YouTubeTranscriptApi
 
@@ -111,6 +113,24 @@ import yt_dlp
 #             print(f"Error fetching transcript for video ID {video_id} on attempt {attempt}: {e}")
 #             time.sleep(retry_delay * attempt)
 
+# Decode and save the cookie file to /tmp only once
+COOKIE_PATH = "/tmp/cookies.txt"
+
+def ensure_cookie_file():
+    if not os.path.exists(COOKIE_PATH):
+        b64_data = os.getenv("YT_COOKIES_B64")
+        if b64_data:
+            try:
+                with open(COOKIE_PATH, "wb") as f:
+                    f.write(base64.b64decode(b64_data))
+            except Exception as e:
+                print(f"Error decoding cookies: {e}")
+        else:
+            print("YT_COOKIES_B64 not set in environment.")
+
+ensure_cookie_file()  # Run at import time or app startup
+
+
 def parse_subtitle_content(subtitle_content, ext):
   root = ET.fromstring(subtitle_content)
   transcript = []
@@ -135,6 +155,7 @@ def fetch_transcript(video_id, preferred_langs=['en-orig', 'en']):
         'no_warnings': True,
         'log_warnings': False,
         'format': 'bestaudio/best',
+        'cookiefile': COOKIE_PATH,
     }
 
     try:
